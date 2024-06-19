@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Drag and Drop Interface</title>
+    <style>
+      .container {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+      }
+
+      .draggable {
+        width: 100px;
+        height: 100px;
+        padding: 10px;
+        background-color: lightblue;
+        text-align: center;
+        line-height: 100px;
+        cursor: move;
+        position: absolute;
+      }
+
+      .droppable {
+        width: 200px;
+        height: 200px;
+        padding: 10px;
+        background-color: lightgray;
+        text-align: center;
+        line-height: 200px;
+        border: 2px dashed darkgray;
+        position: absolute;
+      }
+
+      #drag1 {
+        top: 50px;
+        left: 50px;
+      }
+
+      #drop1 {
+        top: 200px;
+        left: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="draggable" draggable="true" id="drag1">Drag me</div>
+      <div class="droppable" id="drop1">Drop here</div>
+    </div>
+
+    <script>
+      function drag(event) {
+        event.dataTransfer.setData("text", event.target.id);
+      }
+
+      function allowDrop(event) {
+        event.preventDefault();
+      }
+
+      function drop(event) {
+        event.preventDefault();
+        var data = event.dataTransfer.getData("text");
+        var draggedElement = document.getElementById(data);
+        if (event.target.className.includes("droppable")) {
+          event.target.appendChild(draggedElement);
+          draggedElement.style.position = "absolute";
+          draggedElement.style.top = "50%";
+          draggedElement.style.left = "50%";
+          draggedElement.style.transform = "translate(-50%, -50%)";
+        }
+      }
+
+      function setupDragAndDrop() {
+        var draggables = document.querySelectorAll('.draggable');
+        var droppables = document.querySelectorAll('.droppable');
+
+        draggables.forEach(function(draggable) {
+          draggable.addEventListener('dragstart', drag);
+          draggable.addEventListener('dragend', function(event) {
+            event.target.style.opacity = "";
+          });
+        });
+
+        droppables.forEach(function(droppable) {
+          droppable.addEventListener('dragover', allowDrop);
+          droppable.addEventListener('drop', drop);
+          droppable.addEventListener('dragenter', function(event) {
+            if (event.target.className.includes("droppable")) {
+              event.target.style.background = "lightgreen";
+            }
+          });
+          droppable.addEventListener('dragleave', function(event) {
+            if (event.target.className.includes("droppable")) {
+              event.target.style.background = "";
+            }
+          });
+        });
+      }
+
+      // Initialize the drag-and-drop functionality
+      document.addEventListener('DOMContentLoaded', setupDragAndDrop);
+    </script>
+  </body>
+</html>
