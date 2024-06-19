@@ -1,104 +1,177 @@
 <!doctype html>
 <html>
-  <head>
-    <title>Drag and Drop Interface</title>
+<head>
+    <title>Drag and Drop Interface with Lines</title>
     <style>
-      .container {
-        position: relative;
-        width: 100%;
-        height: 100vh;
-      }
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+        }
 
-      .draggable {
-        width: 100px;
-        height: 100px;
-        padding: 10px;
-        background-color: lightblue;
-        text-align: center;
-        line-height: 100px;
-        cursor: move;
-        position: absolute;
-      }
+        .draggable {
+            width: 100px;
+            height: 100px;
+            padding: 10px;
+            background-color: lightblue;
+            text-align: center;
+            line-height: 100px;
+            cursor: move;
+            position: absolute;
+        }
 
-      .droppable {
-        width: 200px;
-        height: 200px;
-        padding: 10px;
-        background-color: lightgray;
-        text-align: center;
-        line-height: 200px;
-        border: 2px dashed darkgray;
-        position: absolute;
-      }
+        .droppable {
+            width: 100px;
+            height: 100px;
+            padding: 10px;
+            background-color: lightgray;
+            text-align: center;
+            line-height: 100px;
+            border: 2px dashed darkgray;
+            position: absolute;
+        }
 
-      #drag1 {
-        top: 50px;
-        left: 50px;
-      }
+        .no-connect {
+            background-color: lightcoral;
+        }
 
-      #drop1 {
-        top: 200px;
-        left: 300px;
-      }
+        #drag1 {
+            top: 50px;
+            left: 50px;
+        }
+
+        #drop0 {
+            top: 50px;
+            left: 300px;
+        }
+
+        #drop1 {
+            top: 200px;
+            left: 300px;
+        }
+
+        #drop2 {
+            top: 200px;
+            left: 500px;
+        }
+
+        #drop3 {
+            top: 200px;
+            left: 700px;
+        }
+
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="container">
-      <div class="draggable" draggable="true" id="drag1">Drag me</div>
-      <div class="droppable" id="drop1">Drop here</div>
+        <canvas id="linesCanvas"></canvas>
+        <div class="draggable" draggable="true" id="drag1">Drag me</div>
+        <div class="droppable no-connect" id="drop0">No connection</div>
+        <div class="droppable" id="drop1">Drop here</div>
+        <div class="droppable" id="drop2">Drop here too</div>
+        <div class="droppable" id="drop3">And here</div>
     </div>
 
     <script>
-      function drag(event) {
-        event.dataTransfer.setData("text", event.target.id);
-      }
-
-      function allowDrop(event) {
-        event.preventDefault();
-      }
-
-      function drop(event) {
-        event.preventDefault();
-        var data = event.dataTransfer.getData("text");
-        var draggedElement = document.getElementById(data);
-        if (event.target.className.includes("droppable")) {
-          event.target.appendChild(draggedElement);
-          draggedElement.style.position = "absolute";
-          draggedElement.style.top = "50%";
-          draggedElement.style.left = "50%";
-          draggedElement.style.transform = "translate(-50%, -50%)";
+        function adjustCanvasSize() {
+            const canvas = document.getElementById('linesCanvas');
+            const container = document.querySelector('.container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
         }
-      }
 
-      function setupDragAndDrop() {
-        var draggables = document.querySelectorAll('.draggable');
-        var droppables = document.querySelectorAll('.droppable');
+        function drawLine(x1, y1, x2, y2) {
+            const canvas = document.getElementById('linesCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
 
-        draggables.forEach(function(draggable) {
-          draggable.addEventListener('dragstart', drag);
-          draggable.addEventListener('dragend', function(event) {
-            event.target.style.opacity = "";
-          });
-        });
+        function updateLines() {
+            const canvas = document.getElementById('linesCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
 
-        droppables.forEach(function(droppable) {
-          droppable.addEventListener('dragover', allowDrop);
-          droppable.addEventListener('drop', drop);
-          droppable.addEventListener('dragenter', function(event) {
-            if (event.target.className.includes("droppable")) {
-              event.target.style.background = "lightgreen";
+            const droppables = document.querySelectorAll('.droppable:not(.no-connect)');
+            const centers = [];
+
+            droppables.forEach(droppable => {
+                const rect = droppable.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                centers.push({ x, y });
+            });
+
+            for (let i = 0; i < centers.length; i++) {
+                for (let j = i + 1; j < centers.length; j++) {
+                    drawLine(centers[i].x, centers[i].y, centers[j].x, centers[j].y);
+                }
             }
-          });
-          droppable.addEventListener('dragleave', function(event) {
-            if (event.target.className.includes("droppable")) {
-              event.target.style.background = "";
-            }
-          });
-        });
-      }
+        }
 
-      // Initialize the drag-and-drop functionality
-      document.addEventListener('DOMContentLoaded', setupDragAndDrop);
+        function drag(event) {
+            event.dataTransfer.setData("text", event.target.id);
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            var data = event.dataTransfer.getData("text");
+            var draggedElement = document.getElementById(data);
+            if (event.target.className.includes("droppable")) {
+                event.target.appendChild(draggedElement);
+                draggedElement.style.position = "absolute";
+                draggedElement.style.top = "50%";
+                draggedElement.style.left = "50%";
+                draggedElement.style.transform = "translate(-50%, -50%)";
+                updateLines(); // Update lines after dropping
+            }
+        }
+
+        function setupDragAndDrop() {
+            var draggables = document.querySelectorAll('.draggable');
+            var droppables = document.querySelectorAll('.droppable');
+
+            draggables.forEach(function(draggable) {
+                draggable.addEventListener('dragstart', drag);
+                draggable.addEventListener('dragend', function(event) {
+                    event.target.style.opacity = "";
+                });
+            });
+
+            droppables.forEach(function(droppable) {
+                droppable.addEventListener('dragover', allowDrop);
+                droppable.addEventListener('drop', drop);
+                droppable.addEventListener('dragenter', function(event) {
+                    if (event.target.className.includes("droppable")) {
+                        event.target.style.background = "lightgreen";
+                    }
+                });
+                droppable.addEventListener('dragleave', function(event) {
+                    if (event.target.className.includes("droppable")) {
+                        event.target.style.background = "";
+                    }
+                });
+            });
+
+            // Initial drawing of lines
+            adjustCanvasSize();
+            updateLines();
+        }
+
+        // Initialize the drag-and-drop functionality
+        document.addEventListener('DOMContentLoaded', setupDragAndDrop);
+        window.addEventListener('resize', function() {
+            adjustCanvasSize();
+            updateLines();
+        });
     </script>
-  </body>
+</body>
 </html>
